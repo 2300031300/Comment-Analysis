@@ -106,7 +106,7 @@ If your application uses a different entry-point file, run that file instead.
 
 ## 👨‍💻 Author
 
-**G Aashrith**
+**Gudupalli Aashrith**
 
 ## 📄 License
 
