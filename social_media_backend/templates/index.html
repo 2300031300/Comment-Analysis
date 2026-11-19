@@ -1,9 +1,13 @@
+
 <!DOCTYPE html>
 <html>
+
 <head>
+
     <title>Social Media Comment Analysis</title>
 
     <style>
+
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -12,8 +16,9 @@
 
         .box {
             background: white;
-            padding: 20px;
-            width: 600px;
+            padding: 25px;
+            max-width: 650px;
+            margin: auto;
             border-radius: 8px;
             box-shadow: 0px 0px 10px #ccc;
         }
@@ -23,75 +28,327 @@
             height: 140px;
             padding: 8px;
             font-size: 14px;
+            box-sizing: border-box;
         }
 
         button {
             margin-top: 10px;
-            padding: 8px 16px;
+            padding: 10px 16px;
             cursor: pointer;
             font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            background-color: #2878d0;
+            color: white;
+        }
+
+        button:hover {
+            background-color: #155ba5;
+        }
+
+        input[type="file"] {
+            margin-top: 10px;
         }
 
         .result {
-            margin-top: 15px;
+            margin-top: 20px;
             font-size: 16px;
         }
 
-        .positive { color: green; font-weight: bold; }
-        .negative { color: red; font-weight: bold; }
-        .neutral  { color: orange; font-weight: bold; }
+        .positive {
+            color: green;
+            font-weight: bold;
+        }
+
+        .negative {
+            color: red;
+            font-weight: bold;
+        }
+
+        .neutral {
+            color: orange;
+            font-weight: bold;
+        }
+
+        .section {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        #graph {
+            width: 100%;
+            max-width: 550px;
+            margin-top: 15px;
+        }
+
+        #message {
+            margin-top: 15px;
+            color: #d32f2f;
+        }
+
+        .summary {
+            background: #f0f5fa;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
     </style>
+
 </head>
 
 <body>
 
 <div class="box">
+
     <h2>Social Media Comment Analysis</h2>
 
-    <p><b>Enter your comments per line:</b></p>
+    <!-- Manual Input Section -->
 
-    <textarea id="comment" placeholder="The product is good
+    <div>
+
+        <h3>Method 1: Enter Comments Manually</h3>
+
+        <p>Enter your comments per line:</p>
+
+        <textarea id="comment"
+            placeholder="The product is good
 Average product
 Not satisfied with the product
 Not bad product"></textarea>
 
-    <br>
-    <button onclick="analyze()">Analyze Sentiment</button>
+        <br>
+
+        <button onclick="analyze()">
+            Analyze Sentiment
+        </button>
+
+    </div>
+
+
+    <!-- CSV Upload Section -->
+
+    <div class="section">
+
+        <h3>Method 2: Upload CSV Dataset</h3>
+
+        <p>Select your social media comments CSV file:</p>
+
+        <input
+            type="file"
+            id="dataset"
+            accept=".csv"
+        >
+
+        <br>
+
+        <button onclick="uploadCSV()">
+            Upload and Analyze CSV
+        </button>
+
+        <p>
+            <small>
+                CSV must contain a column named
+                <b>comment</b>.
+            </small>
+        </p>
+
+    </div>
+
+
+    <!-- Error / Status Message -->
+
+    <div id="message"></div>
+
+
+    <!-- Analysis Results -->
 
     <div id="result" class="result"></div>
 
+
+    <!-- Sentiment Graph -->
+
     <h3>Sentiment Graph</h3>
-    <img id="graph" style="width: 550px; height: auto;"/>
+
+    <img id="graph" alt="Sentiment Analysis Graph" hidden>
+
 </div>
 
+
 <script>
+
+    // Display results from both input methods
+
+    function displayResults(data) {
+
+        const resultDiv = document.getElementById("result");
+
+        const graph = document.getElementById("graph");
+
+        const message = document.getElementById("message");
+
+        resultDiv.replaceChildren();
+
+        message.textContent = "";
+
+        if (!data.results || data.results.length === 0) {
+            message.textContent = "No comments available for analysis.";
+            graph.hidden = true;
+            return;
+        }
+
+        // Display total and sentiment counts
+
+        const summary = document.createElement("div");
+
+        summary.className = "summary";
+
+        summary.textContent =
+            "Total Comments: " + data.total +
+            " | Positive: " + data.counts.Positive +
+            " | Negative: " + data.counts.Negative +
+            " | Neutral: " + data.counts.Neutral;
+
+        resultDiv.appendChild(summary);
+
+
+        // Display individual comment results
+
+        data.results.forEach(item => {
+
+            const paragraph = document.createElement("p");
+
+            const sentiment = document.createElement("span");
+
+            paragraph.appendChild(
+                document.createTextNode(item.comment + " : ")
+            );
+
+            sentiment.textContent = item.sentiment;
+
+            sentiment.className = item.sentiment.toLowerCase();
+
+            paragraph.appendChild(sentiment);
+
+            resultDiv.appendChild(paragraph);
+
+        });
+
+
+        // Display graph
+
+        graph.src = "data:image/png;base64," + data.graph;
+
+        graph.hidden = false;
+
+    }
+
+
+    // Manual comment analysis
+
     function analyze() {
-        const commentText = document.getElementById("comment").value;
+
+        const commentText =
+            document.getElementById("comment").value;
+
+        document.getElementById("message").textContent = "";
 
         fetch("/analyze", {
+
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ comment: commentText })
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                comment: commentText
+            })
+
         })
-        .then(response => response.json())
-        .then(data => {
-            let output = "";
 
-            data.results.forEach(item => {
-                let cls = "neutral";
-                if (item.sentiment === "Positive") cls = "positive";
-                else if (item.sentiment === "Negative") cls = "negative";
+        .then(response => response.json().then(data => {
 
-                output += `<p>${item.comment} :-
-                    <span class="${cls}">${item.sentiment}</span></p>`;
-            });
+            if (!response.ok) {
+                throw new Error(data.error || "Analysis failed");
+            }
 
-            document.getElementById("result").innerHTML = output;
-            document.getElementById("graph").src =
-                "data:image/png;base64," + data.graph;
+            return data;
+
+        }))
+
+        .then(data => displayResults(data))
+
+        .catch(error => {
+
+            document.getElementById("message").textContent =
+                error.message;
+
         });
+
     }
+
+
+    // CSV dataset upload and analysis
+
+    function uploadCSV() {
+
+        const fileInput = document.getElementById("dataset");
+
+        const message = document.getElementById("message");
+
+        if (!fileInput.files.length) {
+
+            message.textContent = "Please select a CSV file first.";
+
+            return;
+
+        }
+
+        const formData = new FormData();
+
+        formData.append("dataset", fileInput.files[0]);
+
+        message.textContent = "Processing CSV dataset...";
+
+        fetch("/upload", {
+
+            method: "POST",
+
+            body: formData
+
+        })
+
+        .then(response => response.json().then(data => {
+
+            if (!response.ok) {
+                throw new Error(data.error || "CSV upload failed");
+            }
+
+            return data;
+
+        }))
+
+        .then(data => {
+
+            displayResults(data);
+
+            message.textContent =
+                "CSV dataset analyzed successfully!";
+
+        })
+
+        .catch(error => {
+
+            message.textContent = error.message;
+
+        });
+
+    }
+
 </script>
 
 </body>
+
 </html>
