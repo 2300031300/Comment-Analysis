@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Relation Extraction App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+        }
+        table {
+            border-collapse: collapse;
+            margin-top: 20px;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #999;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Relation Extraction Web App</h2>
+
+<form method="post">
+    <label>Enter sentences (one per line):</label><br><br>
+    <textarea name="sentences" required></textarea><br>
+    <button type="submit">Extract Relations</button>
+</form>
+
+{% if rb_table is not none %}
+<h3>Rule-Based Relation Extraction</h3>
+{{ rb_table.to_html(index=False) }}
+{% endif %}
+
+{% if ml_table is not none %}
+<h3>ML-Based Relation Extraction</h3>
+{{ ml_table.to_html(index=False) }}
+{% endif %}
+
+</body>
+</html>

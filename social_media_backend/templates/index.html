@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Social Media Comment Analysis</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 40px;
+        }
+
+        .box {
+            background: white;
+            padding: 20px;
+            width: 600px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px #ccc;
+        }
+
+        textarea {
+            width: 100%;
+            height: 140px;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .result {
+            margin-top: 15px;
+            font-size: 16px;
+        }
+
+        .positive { color: green; font-weight: bold; }
+        .negative { color: red; font-weight: bold; }
+        .neutral  { color: orange; font-weight: bold; }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+    <h2>Social Media Comment Analysis</h2>
+
+    <p><b>Enter your comments per line:</b></p>
+
+    <textarea id="comment" placeholder="The product is good
+Average product
+Not satisfied with the product
+Not bad product"></textarea>
+
+    <br>
+    <button onclick="analyze()">Analyze Sentiment</button>
+
+    <div id="result" class="result"></div>
+
+    <h3>Sentiment Graph</h3>
+    <img id="graph" style="width: 550px; height: auto;"/>
+</div>
+
+<script>
+    function analyze() {
+        const commentText = document.getElementById("comment").value;
+
+        fetch("/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ comment: commentText })
+        })
+        .then(response => response.json())
+        .then(data => {
+            let output = "";
+
+            data.results.forEach(item => {
+                let cls = "neutral";
+                if (item.sentiment === "Positive") cls = "positive";
+                else if (item.sentiment === "Negative") cls = "negative";
+
+                output += `<p>${item.comment} :-
+                    <span class="${cls}">${item.sentiment}</span></p>`;
+            });
+
+            document.getElementById("result").innerHTML = output;
+            document.getElementById("graph").src =
+                "data:image/png;base64," + data.graph;
+        });
+    }
+</script>
+
+</body>
+</html>
